@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+export const runtime = 'edge'; // <-- این خط درست برای edge runtime
+
 export async function POST(req: NextRequest) {
   try {
     const { username } = await req.json();
@@ -91,9 +93,3 @@ Keep concise, data-driven, visual-friendly (short sections, bullets, emojis). Ci
     return NextResponse.json({ error: 'Something went wrong. Try again!' }, { status: 500 });
   }
 }
-
-export const config = {
-  runtime: 'edge',
-};
-  runtime: 'edge',
-};
