@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { TwitterApi } from 'twitter-api-v2';
 
-export const runtime = 'edge';
+// حذف یا تغییر runtime به nodejs
+// export const runtime = 'nodejs'; // یا کامل حذف کن
 
 export async function POST(req: NextRequest) {
   try {
@@ -18,10 +19,8 @@ export async function POST(req: NextRequest) {
 
     const handle = fullUsername.replace('@', '');
 
-    // Twitter Client با Bearer Token (ساده‌ترین روش)
     const client = new TwitterApi(process.env.TWITTER_BEARER_TOKEN || '');
 
-    // اول کاربر رو پیدا کن
     const userResponse = await client.v2.usersByUsernames([handle]);
 
     if (!userResponse.data || userResponse.data.length === 0) {
@@ -30,7 +29,6 @@ export async function POST(req: NextRequest) {
 
     const userId = userResponse.data[0].id;
 
-       // پست‌های اخیر (حداکثر 100 پست، با metrics)
     const tweetsResponse = await client.v2.userTimeline(userId, {
       max_results: 100,
       'tweet.fields': ['created_at', 'public_metrics', 'text', 'lang'],
@@ -39,12 +37,11 @@ export async function POST(req: NextRequest) {
 
     const tweets = tweetsResponse.data.data || [];
 
-    // داده‌ها رو جمع کن برای پرامپت
     const tweetSummaries = tweets.slice(0, 50).map((tweet, index) => {
-      const metrics = tweet.public_metrics;
-      return `${index + 1}. "${tweet.text.substring(0, 200)}..." 
+      const metrics = tweet.public_metrics || {};
+      return `${index + 1}. "${tweet.text?.substring(0, 200)}..." 
 Created: ${tweet.created_at?.substring(0, 10)}
-Likes: ${metrics?.like_count}, Retweets: ${metrics?.retweet_count}, Replies: ${metrics?.reply_count}, Quotes: ${metrics?.quote_count}`;
+Likes: ${metrics.like_count || 0}, Retweets: ${metrics.retweet_count || 0}, Replies: ${metrics.reply_count || 0}`;
     }).join('\n\n');
 
     const stats = {
@@ -54,37 +51,35 @@ Likes: ${metrics?.like_count}, Retweets: ${metrics?.retweet_count}, Replies: ${m
       avg_replies: tweets.length > 0 ? Math.round(tweets.reduce((sum, t) => sum + (t.public_metrics?.reply_count || 0), 0) / tweets.length) : 0,
     };
 
-    // پرامپت نهایی با داده‌های واقعی
     const prompt = `You are an expert Crypto Twitter analyst.
 
-Here is real data from the X account ${fullUsername}:
+Real data from X account ${fullUsername}:
 
-- Total recent original posts analyzed: ${stats.total_posts}
-- Average likes per post: ${stats.avg_likes}
+- Total recent original posts: ${stats.total_posts}
+- Average likes: ${stats.avg_likes}
 - Average retweets: ${stats.avg_retweets}
 - Average replies: ${stats.avg_replies}
 
 Recent posts (latest 50):
-${tweetSummaries || 'No recent posts found.'}
+${tweetSummaries || 'No recent posts.'}
 
-Now analyze this account in depth and provide a full Crypto Twitter Health Check + Growth Alpha.
+Analyze this account in depth and provide a full Crypto Twitter Health Check + Growth Alpha.
 
 Use a fun, engaging, CT-vibe tone with sarcasm, memes, emojis, and light roasts.
 
 Sections:
-- Account Performance (followers quality, growth trends, engagement rate)
-- Content Quality (best formats, standout posts, underperformers)
-- Audience Insights (who engages, common vibes)
-- Account Visibility & Health (shadowban check, algo trust)
+- Account Performance
+- Content Quality
+- Audience Insights
+- Account Visibility & Health
 - Crypto Personality Type + Meme Representation
 - Alpha Potential (0-100)
-- Benchmark vs similar accounts
+- Benchmark
 - Summary with Overall Score (0-100), Top 5 Strengths/Weaknesses, Top 5 Recommendations
 - Shareable Quote
 
-Keep it concise, visual-friendly, with emojis and bullets.`;
+Keep concise, visual-friendly, with emojis and bullets.`;
 
-    // فرستادن به OpenAI
     const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -102,7 +97,7 @@ Keep it concise, visual-friendly, with emojis and bullets.`;
     if (!openaiResponse.ok) {
       const errorText = await openaiResponse.text();
       console.error('OpenAI Error:', errorText);
-      return NextResponse.json({ error: 'Failed to generate analysis with OpenAI' }, { status: 500 });
+      return NextResponse.json({ error: 'Failed to generate analysis' }, { status: 500 });
     }
 
     const data = await openaiResponse.json();
@@ -111,6 +106,6 @@ Keep it concise, visual-friendly, with emojis and bullets.`;
     return NextResponse.json({ analysis });
   } catch (error: any) {
     console.error('Server Error:', error);
-    return NextResponse.json({ error: 'Something went wrong: ' + error.message }, { status: 500 });
+    return NextResponse.json({ error: 'Something went wrong. Try again!' }, { status: 500 });
   }
 }
