@@ -26,12 +26,24 @@ export function HealthCheckForm({ onResult }: HealthCheckFormProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username }),
       })
+
+      if (!res.ok) {
+        const errorData = await res.json()
+        console.error("[v0] API error:", errorData)
+        alert(errorData.error || "Failed to analyze account. Please try again!")
+        return
+      }
+
       const data = await res.json()
       if (data.analysis) {
         onResult(data.analysis, username)
+      } else {
+        console.error("[v0] No analysis in response:", data)
+        alert("No analysis returned. Please try again!")
       }
     } catch (error) {
       console.error("[v0] Analysis error:", error)
+      alert("Network error. Please check your connection and try again!")
     } finally {
       setIsLoading(false)
     }

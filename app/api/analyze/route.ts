@@ -1,18 +1,19 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { generateText } from "ai"
+import { type NextRequest, NextResponse } from "next/server"
 
-export const runtime = 'edge';
+export const runtime = "edge"
 
 export async function POST(req: NextRequest) {
   try {
-    const { username } = await req.json();
+    const { username } = await req.json()
 
-    if (!username || username.trim() === '') {
-      return NextResponse.json({ error: 'Please enter a valid username' }, { status: 400 });
+    if (!username || username.trim() === "") {
+      return NextResponse.json({ error: "Please enter a valid username" }, { status: 400 })
     }
 
-    let fullUsername = username.trim();
-    if (!fullUsername.startsWith('@')) {
-      fullUsername = `@${fullUsername}`;
+    let fullUsername = username.trim()
+    if (!fullUsername.startsWith("@")) {
+      fullUsername = `@${fullUsername}`
     }
 
     const prompt = `Analyze my X account ${fullUsername} in depth and give me a full Crypto Twitter Health Check + Growth Alpha. Focus on crypto/DeFi/airdrop/prediction markets niche. Current date: December 28, 2025.
@@ -67,34 +68,23 @@ Summary
 - Top 5 Actionable Recommendations (specific)
 - Shareable Quote: One punchy line for screenshot/X share
 
-Keep concise, data-driven, visual-friendly (short sections, bullets, emojis). Cite post examples where possible.`;
+Keep concise, data-driven, visual-friendly (short sections, bullets, emojis). Cite post examples where possible.`
 
-    // مستقیم به Vercel AI Gateway برای Grok (رایگان)
-    const response = await fetch('https://sdk.vercel.ai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'xai/grok-4',
-        messages: [{ role: 'user', content: prompt }],
-        temperature: 0.8,
-        max_tokens: 4096,
-      }),
-    });
+    const { text } = await generateText({
+      model: "xai/grok-beta",
+      prompt: prompt,
+      temperature: 0.8,
+      maxTokens: 4096,
+    })
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Vercel Gateway Error:', errorText);
-      return NextResponse.json({ error: 'Failed to generate analysis. Try again!' }, { status: 500 });
-    }
-
-    const data = await response.json();
-    const analysis = data.choices[0].message.content;
-
-    return NextResponse.json({ analysis });
+    return NextResponse.json({ analysis: text })
   } catch (error: any) {
-    console.error('Server Error:', error);
-    return NextResponse.json({ error: 'Something went wrong. Try again!' }, { status: 500 });
+    console.error("Server Error:", error)
+    return NextResponse.json(
+      {
+        error: error.message || "Something went wrong. Try again!",
+      },
+      { status: 500 },
+    )
   }
 }
