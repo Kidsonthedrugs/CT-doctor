@@ -72,7 +72,7 @@ Keep concise, data-driven, visual-friendly (short sections, bullets, emojis).`;
 
     // استفاده از Vercel AI SDK برای Grok
     const { text } = await AI.generateText({
-      model: 'grok-beta', // یا 'grok-4' اگر در دسترس بود
+      model: 'xai/grok-4',
       prompt,
       temperature: 0.8,
       maxTokens: 4096,
