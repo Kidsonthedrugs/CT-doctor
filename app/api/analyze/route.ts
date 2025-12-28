@@ -1,24 +1,23 @@
-import { generateText } from "ai"
-import { type NextRequest, NextResponse } from "next/server"
+import { NextRequest, NextResponse } from 'next/server';
 
-export const runtime = "edge"
+export const runtime = 'edge';
 
 export async function POST(req: NextRequest) {
   try {
-    const { username } = await req.json()
+    const { username } = await req.json();
 
-    if (!username || username.trim() === "") {
-      return NextResponse.json({ error: "Please enter a valid username" }, { status: 400 })
+    if (!username || username.trim() === '') {
+      return NextResponse.json({ error: 'Please enter a valid username' }, { status: 400 });
     }
 
-    let fullUsername = username.trim()
-    if (!fullUsername.startsWith("@")) {
-      fullUsername = `@${fullUsername}`
+    let fullUsername = username.trim();
+    if (!fullUsername.startsWith('@')) {
+      fullUsername = `@${fullUsername}`;
     }
 
     const prompt = `Analyze my X account ${fullUsername} in depth and give me a full Crypto Twitter Health Check + Growth Alpha. Focus on crypto/DeFi/airdrop/prediction markets niche. Current date: December 28, 2025.
 
-Use a fun, engaging, CT-vibe tone: motivational with sarcasm, memes, emojis, and light roasts.
+Use a fun, engaging, CT-vibe tone: motivational with sarcasm, memes, emojis, and light roasts (e.g., "You're yapping like a pro degen" or "Fix this or stay poor").
 
 Data Collection Strategy (CRITICAL for depth):
 Analyze across multiple time layers for comprehensive insights:
@@ -68,23 +67,34 @@ Summary
 - Top 5 Actionable Recommendations (specific)
 - Shareable Quote: One punchy line for screenshot/X share
 
-Keep concise, data-driven, visual-friendly (short sections, bullets, emojis). Cite post examples where possible.`
+Keep concise, data-driven, visual-friendly (short sections, bullets, emojis). Cite post examples where possible.`;
 
-    const { text } = await generateText({
-      model: "xai/grok-beta",
-      prompt: prompt,
-      temperature: 0.8,
-      maxTokens: 4096,
-    })
-
-    return NextResponse.json({ analysis: text })
-  } catch (error: any) {
-    console.error("Server Error:", error)
-    return NextResponse.json(
-      {
-        error: error.message || "Something went wrong. Try again!",
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+        'Content-Type': 'application/json',
       },
-      { status: 500 },
-    )
+      body: JSON.stringify({
+        model: 'gpt-4o-mini', // سریع، ارزان، کیفیت عالی
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.8,
+        max_tokens: 4096,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('OpenAI Error:', errorText);
+      return NextResponse.json({ error: 'Failed to generate analysis. Try again!' }, { status: 500 });
+    }
+
+    const data = await response.json();
+    const analysis = data.choices[0].message.content;
+
+    return NextResponse.json({ analysis });
+  } catch (error: any) {
+    console.error('Server Error:', error);
+    return NextResponse.json({ error: 'Something went wrong. Try again!' }, { status: 500 });
   }
 }
