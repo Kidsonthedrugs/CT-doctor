@@ -30,11 +30,11 @@ export async function POST(req: NextRequest) {
 
     const userId = userResponse.data[0].id;
 
-    // پست‌های اخیر (حداکثر 100 پست، با metrics)
+       // پست‌های اخیر (حداکثر 100 پست، با metrics)
     const tweetsResponse = await client.v2.userTimeline(userId, {
       max_results: 100,
-      tweet.fields: ['created_at', 'public_metrics', 'text', 'lang'],
-      exclude: ['retweets', 'replies'], // فقط پست‌های اصلی
+      'tweet.fields': ['created_at', 'public_metrics', 'text', 'lang'],
+      exclude: ['retweets', 'replies'],
     });
 
     const tweets = tweetsResponse.data.data || [];
