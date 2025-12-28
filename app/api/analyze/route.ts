@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { streamText } from 'ai';
-import { xai } from '@ai-sdk/xai'; // مدل Grok از Vercel AI SDK
+import { xai } from '@ai-sdk/xai';
 
 export const runtime = 'edge';
 
@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
 
     const prompt = `Analyze my X account ${fullUsername} in depth and give me a full Crypto Twitter Health Check + Growth Alpha. Focus on crypto/DeFi/airdrop/prediction markets niche. Current date: December 28, 2025.
 
-Use a fun, engaging, CT-vibe tone: motivational with sarcasm, memes, emojis, and light roasts (e.g., "You're yapping like a pro degen" or "Fix this or stay poor").
+Use a fun, engaging, CT-vibe tone: motivational with sarcasm, memes, emojis, and light roasts.
 
 Data Collection Strategy (CRITICAL for depth):
 Analyze across multiple time layers for comprehensive insights:
@@ -72,7 +72,7 @@ Summary
 Keep concise, data-driven, visual-friendly (short sections, bullets, emojis). Cite post examples where possible.`;
 
     const result = await streamText({
-      model: xai('grok-beta'), // مدل درست Grok در Vercel AI SDK
+      model: 'xai/grok-4'
       prompt: prompt,
       temperature: 0.8,
       maxTokens: 4096,
