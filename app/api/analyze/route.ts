@@ -10,7 +10,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Please enter a valid username' }, { status: 400 });
     }
 
-    // فیکس مشکل @: اگر @ نداشته باشه، اضافه کن
     let fullUsername = username.trim();
     if (!fullUsername.startsWith('@')) {
       fullUsername = `@${fullUsername}`;
@@ -77,7 +76,7 @@ Keep concise, data-driven, visual-friendly (short sections, bullets, emojis). Ci
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'grok-beta', // اول اینو تست کن – بیشترین شانس موفقیت رو داره
+       model: 'grok-3',
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.8,
         max_tokens: 4096,
