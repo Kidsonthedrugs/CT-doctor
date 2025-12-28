@@ -1,16 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-export const runtime = 'edge'; // <-- این خط درست برای edge runtime
+export const runtime = 'edge';
 
 export async function POST(req: NextRequest) {
   try {
     const { username } = await req.json();
 
-    if (!username || !username.startsWith('@')) {
-      return NextResponse.json({ error: 'Please enter a valid @username' }, { status: 400 });
+    if (!username || username.trim() === '') {
+      return NextResponse.json({ error: 'Please enter a valid username' }, { status: 400 });
     }
 
-    const prompt = `Analyze my X account ${username} in depth and give me a full Crypto Twitter Health Check + Growth Alpha. Focus on crypto/DeFi/airdrop/prediction markets niche. Current date: December 28, 2025.
+    // فیکس مشکل @: اگر @ نداشته باشه، اضافه کن
+    let fullUsername = username.trim();
+    if (!fullUsername.startsWith('@')) {
+      fullUsername = `@${fullUsername}`;
+    }
+
+    const prompt = `Analyze my X account ${fullUsername} in depth and give me a full Crypto Twitter Health Check + Growth Alpha. Focus on crypto/DeFi/airdrop/prediction markets niche. Current date: December 28, 2025.
 
 Use a fun, engaging, CT-vibe tone: motivational with sarcasm, memes, emojis, and light roasts (e.g., "You're yapping like a pro degen" or "Fix this or stay poor").
 
@@ -71,7 +77,7 @@ Keep concise, data-driven, visual-friendly (short sections, bullets, emojis). Ci
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'grok-4',
+        model: 'grok-beta', // اول اینو تست کن – بیشترین شانس موفقیت رو داره
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.8,
         max_tokens: 4096,
