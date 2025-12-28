@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { streamText } from 'ai';
-import { xai } from '@ai-sdk/xai';
 
 export const runtime = 'edge';
 
@@ -71,18 +69,32 @@ Summary
 
 Keep concise, data-driven, visual-friendly (short sections, bullets, emojis). Cite post examples where possible.`;
 
-    const result = await streamText({
-      model: 'xai/grok-4'
-      prompt: prompt,
-      temperature: 0.8,
-      maxTokens: 4096,
+    // مستقیم به Vercel AI Gateway برای Grok (رایگان)
+    const response = await fetch('https://sdk.vercel.ai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'xai/grok-beta', // مدل درست برای Vercel
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.8,
+        max_tokens: 4096,
+      }),
     });
 
-    const text = await result.text;
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Vercel Gateway Error:', errorText);
+      return NextResponse.json({ error: 'Failed to generate analysis. Try again!' }, { status: 500 });
+    }
 
-    return NextResponse.json({ analysis: text });
+    const data = await response.json();
+    const analysis = data.choices[0].message.content;
+
+    return NextResponse.json({ analysis });
   } catch (error: any) {
-    console.error('AI Error:', error);
-    return NextResponse.json({ error: 'Failed to generate analysis. Try again!' }, { status: 500 });
+    console.error('Server Error:', error);
+    return NextResponse.json({ error: 'Something went wrong. Try again!' }, { status: 500 });
   }
 }
