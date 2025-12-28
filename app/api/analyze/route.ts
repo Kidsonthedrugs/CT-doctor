@@ -76,7 +76,7 @@ Keep concise, data-driven, visual-friendly (short sections, bullets, emojis). Ci
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'xai/grok-beta', // مدل درست برای Vercel
+        model: 'xai/grok-4',
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.8,
         max_tokens: 4096,
